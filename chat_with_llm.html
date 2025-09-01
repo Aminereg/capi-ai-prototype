@@ -1,0 +1,1457 @@
+<html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAPI-AI Chat Interface</title>
+    <link rel="icon" type="image/png" href="3.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>
+        ::-webkit-scrollbar { display: none; }
+        body { font-family: 'Inter', sans-serif; }
+        .theme-toggle { transition: all 0.3s ease; }
+        .chat-message { animation: slideInUp 0.3s ease; }
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .typing-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #808080;
+            animation: typing 1.4s infinite;
+        }
+        .typing-indicator:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+    </style>
+    <script>tailwind.config = {
+  "darkMode": "class",
+  "theme": {
+    "extend": {
+      "colors": {
+        "dark-blue": "#000033",
+        "light-gray": "#808080",
+        "success-green": "#008000"
+      },
+      "fontFamily": {
+        "sans": [
+          "Inter",
+          "sans-serif"
+        ]
+      }
+    }
+  }
+};</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&amp;display=swap"><style>
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  </style></head>
+<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
+    
+    <!-- Header Section -->
+    <header id="header" class="bg-white dark:bg-dark-blue border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center">
+                <img src="3.png" alt="CAPI-AI Logo" class="w-10 h-10 rounded-lg">
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-dark-blue dark:text-white">CAPI-AI</h1>
+                <p class="text-sm text-light-gray">Your ERP Co-pilot</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-6">
+            <div class="hidden md:flex items-center space-x-4">
+                <div class="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded-lg">
+                    <div class="w-2 h-2 bg-success-green rounded-full animate-pulse"></div>
+                    <span class="text-sm font-medium">AI Online</span>
+                </div>
+                <div class="text-sm text-light-gray">
+                    <span class="font-medium">1,247</span> queries processed today
+                </div>
+            </div>
+            
+            <button id="theme-toggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:block"></i>
+            </button>
+            
+            <div class="flex items-center space-x-3">
+                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User" class="w-8 h-8 rounded-full">
+                <span class="hidden md:block font-medium">John Doe</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Breadcrumb -->
+    <nav id="breadcrumb" class="bg-gray-50 dark:bg-gray-800 px-6 py-3 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center space-x-2 text-sm">
+            <a href="landing_capi.html" class="text-light-gray hover:text-dark-blue dark:hover:text-white cursor-pointer">Home</a>
+            <i class="fa-solid fa-chevron-right text-light-gray text-xs"></i>
+            <span class="text-dark-blue dark:text-white font-medium">AI Chat</span>
+        </div>
+    </nav>
+
+    <!-- Main Chat Container -->
+    <div class="flex h-screen">
+        
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-80 bg-white dark:bg-dark-blue border-r border-gray-200 dark:border-gray-700 flex flex-col">
+            
+            <!-- New Chat Button -->
+            <div id="new-chat-section" class="p-6">
+                <button id="new-chat-btn" class="w-full bg-gradient-to-r from-dark-blue to-blue-600 text-white px-4 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 flex items-center justify-center space-x-2 font-medium">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Chat Session</span>
+                </button>
+            </div>
+
+            <!-- Quick Actions -->
+            <div id="quick-actions" class="px-6 pb-4">
+                <h3 class="text-sm font-semibold text-light-gray uppercase tracking-wider mb-3">Quick Actions</h3>
+                <div class="space-y-2">
+                    <button id="quick-sales" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-3">
+                        <i class="fa-solid fa-chart-line text-success-green"></i>
+                        <span class="text-sm">Sales Analysis</span>
+                    </button>
+                    <button id="quick-inventory" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-3">
+                        <i class="fa-solid fa-boxes text-blue-500"></i>
+                        <span class="text-sm">Inventory Check</span>
+                    </button>
+                    <button id="quick-compliance" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-3">
+                        <i class="fa-solid fa-shield-alt text-yellow-500"></i>
+                        <span class="text-sm">Compliance Review</span>
+                    </button>
+                    <button id="quick-employees" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-3">
+                        <i class="fa-solid fa-users text-purple-500"></i>
+                        <span class="text-sm">Employee Insights</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat History -->
+            <div id="chat-history" class="flex-1 overflow-y-auto px-6">
+                <h3 class="text-sm font-semibold text-light-gray uppercase tracking-wider mb-3">Recent Conversations</h3>
+                <div class="space-y-2">
+                    <div class="p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border-l-4 border-success-green">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-medium">Q4 Sales Performance</span>
+                            <div class="flex items-center space-x-1">
+                                <button class="text-light-gray hover:text-gray-600 p-1">
+                                    <i class="fa-solid fa-edit text-xs"></i>
+                                </button>
+                                <button class="text-light-gray hover:text-red-500 p-1">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-light-gray">2 hours ago • 15 messages</p>
+                    </div>
+                    
+                    <div class="p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-medium">Inventory Optimization</span>
+                            <div class="flex items-center space-x-1">
+                                <button class="text-light-gray hover:text-gray-600 p-1">
+                                    <i class="fa-solid fa-edit text-xs"></i>
+                                </button>
+                                <button class="text-light-gray hover:text-red-500 p-1">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-light-gray">Yesterday • 8 messages</p>
+                    </div>
+                    
+                    <div class="p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-medium">Employee Performance Review</span>
+                            <div class="flex items-center space-x-1">
+                                <button class="text-light-gray hover:text-gray-600 p-1">
+                                    <i class="fa-solid fa-edit text-xs"></i>
+                                </button>
+                                <button class="text-light-gray hover:text-red-500 p-1">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-light-gray">3 days ago • 12 messages</p>
+                    </div>
+                    
+                    <div class="p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-medium">Compliance Audit Preparation</span>
+                            <div class="flex items-center space-x-1">
+                                <button class="text-light-gray hover:text-gray-600 p-1">
+                                    <i class="fa-solid fa-edit text-xs"></i>
+                                </button>
+                                <button class="text-light-gray hover:text-red-500 p-1">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-light-gray">1 week ago • 22 messages</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Footer -->
+            <div id="sidebar-footer" class="border-t border-gray-200 dark:border-gray-700 p-6 space-y-2">
+                <button id="export-chat" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-3">
+                    <i class="fa-solid fa-download text-light-gray"></i>
+                    <span class="text-sm">Export Chat History</span>
+                </button>
+                <a href="user_setting.html" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-3">
+                    <i class="fa-solid fa-cog text-light-gray"></i>
+                    <span class="text-sm">Chat Settings</span>
+                </a>
+                <button class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-3">
+                    <i class="fa-solid fa-question-circle text-light-gray"></i>
+                    <span class="text-sm">Help &amp; Documentation</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main id="main-chat" class="flex-1 flex flex-col">
+            
+            <!-- Chat Header -->
+            <div id="chat-header" class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-8 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <h2 class="text-lg font-semibold">Q4 Sales Performance Analysis</h2>
+                        <div class="flex items-center space-x-2 bg-success-green/10 text-success-green px-3 py-1 rounded-full">
+                            <div class="w-2 h-2 bg-success-green rounded-full"></div>
+                            <span class="text-sm font-medium">Active Session</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <button id="share-chat" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Share conversation">
+                            <i class="fa-solid fa-share text-light-gray"></i>
+                        </button>
+                        <button id="bookmark-chat" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Bookmark conversation">
+                            <i class="fa-solid fa-bookmark text-light-gray"></i>
+                        </button>
+                        <button id="chat-menu" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="More options">
+                            <i class="fa-solid fa-ellipsis-v text-light-gray"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mt-3 flex items-center space-x-6 text-sm text-light-gray">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-clock"></i>
+                        <span>Started 2 hours ago</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-comment"></i>
+                        <span>15 messages</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-bar"></i>
+                        <span>3 reports generated</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Messages Area -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-8 space-y-6">
+                
+                <!-- Welcome Message -->
+                <div class="chat-message flex items-start space-x-4">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                        <img src="3.png" alt="CAPI-AI" class="w-10 h-10 rounded-full">
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm max-w-4xl">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <span class="font-semibold text-dark-blue dark:text-white">CAPI-AI Assistant</span>
+                            <div class="bg-success-green text-white text-xs px-2 py-1 rounded-full">AI</div>
+                        </div>
+                        <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+                            Welcome to your ERP co-pilot! I'm here to help you analyze your business data, generate insights, and make informed decisions. I can assist with sales analysis, inventory management, compliance reviews, employee performance, and much more.
+                        </p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-left">
+                                <div class="flex items-center space-x-2 mb-1">
+                                    <i class="fa-solid fa-chart-line text-success-green"></i>
+                                    <span class="font-medium text-sm">Sales Analysis</span>
+                                </div>
+                                <p class="text-xs text-light-gray">Analyze Q4 performance</p>
+                            </button>
+                            <button class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-left">
+                                <div class="flex items-center space-x-2 mb-1">
+                                    <i class="fa-solid fa-boxes text-blue-500"></i>
+                                    <span class="font-medium text-sm">Inventory Status</span>
+                                </div>
+                                <p class="text-xs text-light-gray">Check current stock levels</p>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Message -->
+                <div class="chat-message flex items-start space-x-4 justify-end">
+                    <div class="bg-dark-blue text-white rounded-2xl p-6 shadow-sm max-w-2xl">
+                        <div class="flex items-center space-x-2 mb-3 justify-end">
+                            <span class="font-semibold">You</span>
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User" class="w-6 h-6 rounded-full">
+                        </div>
+                        <p class="leading-relaxed">
+                            Can you provide a comprehensive analysis of our Q4 sales performance? I need to understand which products performed best, regional variations, and recommendations for Q1 strategy.
+                        </p>
+                        <div class="text-xs text-blue-200 mt-3 text-right">
+                            Sent 2:34 PM
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Response with Data -->
+                <div class="chat-message flex items-start space-x-4">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                        <img src="3.png" alt="CAPI-AI" class="w-10 h-10 rounded-full">
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm max-w-5xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-semibold text-dark-blue dark:text-white">CAPI-AI Assistant</span>
+                                <div class="bg-success-green text-white text-xs px-2 py-1 rounded-full">Analyzing</div>
+                            </div>
+                            <div class="text-xs text-light-gray">2:35 PM</div>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <h4 class="font-semibold text-dark-blue dark:text-white mb-3">Q4 Sales Performance Overview</h4>
+                                <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+                                    Based on the analysis of your Q4 data, I've identified several key insights. Overall revenue increased by 23% compared to Q3, with total sales reaching $2.4M. Here's the breakdown:
+                                </p>
+                                
+                                <div class="grid grid-cols-3 gap-4 mb-6">
+                                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                        <div class="flex items-center space-x-2 mb-2">
+                                            <i class="fa-solid fa-arrow-up text-success-green"></i>
+                                            <span class="font-semibold text-success-green">Revenue Growth</span>
+                                        </div>
+                                        <div class="text-2xl font-bold text-dark-blue dark:text-white">23%</div>
+                                        <div class="text-sm text-light-gray">vs Q3 2023</div>
+                                    </div>
+                                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                        <div class="flex items-center space-x-2 mb-2">
+                                            <i class="fa-solid fa-dollar-sign text-blue-500"></i>
+                                            <span class="font-semibold text-blue-500">Total Revenue</span>
+                                        </div>
+                                        <div class="text-2xl font-bold text-dark-blue dark:text-white">$2.4M</div>
+                                        <div class="text-sm text-light-gray">Q4 2023</div>
+                                    </div>
+                                    <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                        <div class="flex items-center space-x-2 mb-2">
+                                            <i class="fa-solid fa-shopping-cart text-purple-500"></i>
+                                            <span class="font-semibold text-purple-500">Orders</span>
+                                        </div>
+                                        <div class="text-2xl font-bold text-dark-blue dark:text-white">1,847</div>
+                                        <div class="text-sm text-light-gray">+18% from Q3</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 class="font-semibold text-dark-blue dark:text-white mb-3">Top Performing Products</h4>
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 bg-success-green rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
+                                            <div>
+                                                <div class="font-medium">Enterprise Software Suite</div>
+                                                <div class="text-sm text-light-gray">Software Category</div>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="font-semibold text-success-green">$847K</div>
+                                            <div class="text-sm text-light-gray">35% of total</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
+                                            <div>
+                                                <div class="font-medium">Professional Services</div>
+                                                <div class="text-sm text-light-gray">Consulting</div>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="font-semibold text-blue-500">$623K</div>
+                                            <div class="text-sm text-light-gray">26% of total</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold">3</div>
+                                            <div>
+                                                <div class="font-medium">Hardware Solutions</div>
+                                                <div class="text-sm text-light-gray">Equipment</div>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="font-semibold text-purple-500">$445K</div>
+                                            <div class="text-sm text-light-gray">19% of total</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 class="font-semibold text-dark-blue dark:text-white mb-3">Regional Performance</h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="space-y-2">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-medium">North America</span>
+                                            <span class="text-sm font-semibold">$1.2M (50%)</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                            <div class="bg-success-green h-2 rounded-full" style="width: 50%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-medium">Europe</span>
+                                            <span class="text-sm font-semibold">$720K (30%)</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                            <div class="bg-blue-500 h-2 rounded-full" style="width: 30%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-medium">Asia Pacific</span>
+                                            <span class="text-sm font-semibold">$336K (14%)</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                            <div class="bg-purple-500 h-2 rounded-full" style="width: 14%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-medium">Other Regions</span>
+                                            <span class="text-sm font-semibold">$144K (6%)</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                            <div class="bg-yellow-500 h-2 rounded-full" style="width: 6%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border-l-4 border-blue-500">
+                                <h4 class="font-semibold text-blue-700 dark:text-blue-300 mb-2">Q1 2024 Recommendations</h4>
+                                <ul class="space-y-2 text-sm text-blue-600 dark:text-blue-400">
+                                    <li class="flex items-start space-x-2">
+                                        <i class="fa-solid fa-check-circle text-success-green mt-0.5"></i>
+                                        <span>Focus marketing efforts on Enterprise Software Suite expansion in Europe</span>
+                                    </li>
+                                    <li class="flex items-start space-x-2">
+                                        <i class="fa-solid fa-check-circle text-success-green mt-0.5"></i>
+                                        <span>Increase Professional Services capacity to meet growing demand</span>
+                                    </li>
+                                    <li class="flex items-start space-x-2">
+                                        <i class="fa-solid fa-check-circle text-success-green mt-0.5"></i>
+                                        <span>Explore partnership opportunities in Asia Pacific for market expansion</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center space-x-4">
+                                <button class="flex items-center space-x-2 text-light-gray hover:text-dark-blue dark:hover:text-white transition-colors">
+                                    <i class="fa-solid fa-thumbs-up"></i>
+                                    <span class="text-sm">Helpful</span>
+                                </button>
+                                <button class="flex items-center space-x-2 text-light-gray hover:text-dark-blue dark:hover:text-white transition-colors">
+                                    <i class="fa-solid fa-thumbs-down"></i>
+                                    <span class="text-sm">Not Helpful</span>
+                                </button>
+                                <button class="flex items-center space-x-2 text-light-gray hover:text-dark-blue dark:hover:text-white transition-colors">
+                                    <i class="fa-solid fa-copy"></i>
+                                    <span class="text-sm">Copy</span>
+                                </button>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button class="bg-dark-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                    <i class="fa-solid fa-download mr-2"></i>
+                                    Export Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Follow-up User Message -->
+                <div class="chat-message flex items-start space-x-4 justify-end">
+                    <div class="bg-dark-blue text-white rounded-2xl p-6 shadow-sm max-w-2xl">
+                        <div class="flex items-center space-x-2 mb-3 justify-end">
+                            <span class="font-semibold">You</span>
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User" class="w-6 h-6 rounded-full">
+                        </div>
+                        <p class="leading-relaxed">
+                            This is excellent! Can you also show me the month-over-month trends within Q4 and identify any seasonal patterns that might help with inventory planning?
+                        </p>
+                        <div class="text-xs text-blue-200 mt-3 text-right">
+                            Sent 2:42 PM
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Typing Indicator -->
+                <div class="chat-message flex items-start space-x-4">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                        <img src="3.png" alt="CAPI-AI" class="w-10 h-10 rounded-full">
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <span class="font-semibold text-dark-blue dark:text-white">CAPI-AI Assistant</span>
+                            <div class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">Analyzing Data</div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-light-gray">Analyzing monthly trends and seasonal patterns</span>
+                            <div class="flex space-x-1">
+                                <div class="typing-indicator"></div>
+                                <div class="typing-indicator"></div>
+                                <div class="typing-indicator"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input Area -->
+            <div id="chat-input" class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-6">
+                
+                <!-- Suggested Prompts -->
+                <div class="mb-4">
+                    <div class="flex items-center space-x-3 overflow-x-auto pb-2">
+                        <button class="suggested-prompt flex-shrink-0 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-full text-sm transition-colors" data-prompt="Analyze our current inventory levels and provide optimization recommendations">
+                            <i class="fa-solid fa-chart-pie mr-2"></i>
+                            Inventory Analysis
+                        </button>
+                        <button class="suggested-prompt flex-shrink-0 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-full text-sm transition-colors" data-prompt="Generate employee performance report with productivity metrics and improvement suggestions">
+                            <i class="fa-solid fa-users mr-2"></i>
+                            Employee Performance
+                        </button>
+                        <button class="suggested-prompt flex-shrink-0 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-full text-sm transition-colors" data-prompt="Run compliance check across all departments and identify any regulatory gaps">
+                            <i class="fa-solid fa-shield-alt mr-2"></i>
+                            Compliance Check
+                        </button>
+                        <button class="suggested-prompt flex-shrink-0 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-full text-sm transition-colors" data-prompt="Create financial forecast for next quarter based on current trends and market conditions">
+                            <i class="fa-solid fa-chart-line mr-2"></i>
+                            Forecast Trends
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Input Form -->
+                <div class="relative">
+                    <div class="flex items-end space-x-4">
+                        <div class="flex-1 relative">
+                            <textarea id="message-input" placeholder="Ask CAPI-AI about your business data, analytics, or insights..." class="w-full p-4 pr-16 border border-gray-300 dark:border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-dark-blue dark:focus:ring-blue-500 focus:border-transparent resize-none bg-white dark:bg-gray-700 text-gray-800 dark:text-white" rows="1" style="min-height: 56px; max-height: 200px;"></textarea>
+                            
+                            <div class="absolute right-4 bottom-4 flex items-center space-x-2">
+                                <button class="p-2 text-light-gray hover:text-dark-blue dark:hover:text-white transition-colors">
+                                    <i class="fa-solid fa-paperclip"></i>
+                                </button>
+                                <button class="p-2 text-light-gray hover:text-dark-blue dark:hover:text-white transition-colors">
+                                    <i class="fa-solid fa-microphone"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button id="send-button" class="bg-dark-blue hover:bg-blue-700 text-white p-4 rounded-2xl transition-colors flex items-center justify-center">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center justify-between mt-3 text-xs text-light-gray">
+                        <div class="flex items-center space-x-4">
+                            <span>Press Enter to send, Shift+Enter for new line</span>
+                            <div class="flex items-center space-x-1">
+                                <div class="w-2 h-2 bg-success-green rounded-full"></div>
+                                <span>AI Ready</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span>0/4000 characters</span>
+                            <button class="hover:text-dark-blue dark:hover:text-white transition-colors">
+                                <i class="fa-solid fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Quick Access Panel -->
+    <div id="quick-access-panel" class="fixed right-6 top-1/2 transform -translate-y-1/2 space-y-3 z-50">
+        <button class="w-12 h-12 bg-dark-blue text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center group">
+            <i class="fa-solid fa-chart-bar"></i>
+            <span class="absolute right-14 bg-gray-800 text-white px-3 py-1 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Quick Reports
+            </span>
+        </button>
+        <button class="w-12 h-12 bg-success-green text-white rounded-full shadow-lg hover:bg-green-700 transition-all duration-300 flex items-center justify-center group">
+            <i class="fa-solid fa-download"></i>
+            <span class="absolute right-14 bg-gray-800 text-white px-3 py-1 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Export Data
+            </span>
+        </button>
+        <button class="w-12 h-12 bg-purple-500 text-white rounded-full shadow-lg hover:bg-purple-700 transition-all duration-300 flex items-center justify-center group">
+            <i class="fa-solid fa-bookmark"></i>
+            <span class="absolute right-14 bg-gray-800 text-white px-3 py-1 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Save Chat
+            </span>
+        </button>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer" class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-8 py-4">
+        <div class="flex items-center justify-between text-sm text-light-gray">
+            <div class="flex items-center space-x-6">
+                <span>CAPI-AI Dashboard v2.1.0</span>
+                <span>•</span>
+                <span>Last updated: January 2024</span>
+                <span>•</span>
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 bg-success-green rounded-full"></div>
+                    <span>All systems operational</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-6">
+                <span class="hover:text-dark-blue dark:hover:text-white transition-colors cursor-pointer">Privacy Policy</span>
+                <span class="hover:text-dark-blue dark:hover:text-white transition-colors cursor-pointer">Terms of Service</span>
+                <span class="hover:text-dark-blue dark:hover:text-white transition-colors cursor-pointer">API Documentation</span>
+                <div class="flex items-center space-x-2">
+                    <span>Powered by</span>
+                    <span class="font-semibold text-dark-blue dark:text-white">CAPI-AI</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Toggle Functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        html.classList.toggle('dark', currentTheme === 'dark');
+        
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const theme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', theme);
+        });
+
+        // Auto-resize textarea
+        const messageInput = document.getElementById('message-input');
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+            
+            // Update character count
+            const charCount = this.value.length;
+            const charCountElement = document.querySelector('.text-xs.text-light-gray span:last-child');
+            if (charCountElement) {
+                charCountElement.textContent = `${charCount}/4000 characters`;
+            }
+        });
+
+        // Send message functionality
+        const sendButton = document.getElementById('send-button');
+        const chatMessages = document.getElementById('chat-messages');
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Add user message to chat
+            const userMessage = document.createElement('div');
+            userMessage.className = 'chat-message flex items-start space-x-4 justify-end';
+            userMessage.innerHTML = `
+                <div class="bg-dark-blue text-white rounded-2xl p-6 shadow-sm max-w-2xl">
+                    <div class="flex items-center space-x-2 mb-3 justify-end">
+                        <span class="font-semibold">You</span>
+                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User" class="w-6 h-6 rounded-full">
+                    </div>
+                    <p class="leading-relaxed">${message}</p>
+                    <div class="text-xs text-blue-200 mt-3 text-right">
+                        Sent ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </div>
+                </div>
+            `;
+
+            chatMessages.appendChild(userMessage);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Clear input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            
+            // Simulate AI typing
+            setTimeout(() => {
+                const typingIndicator = document.createElement('div');
+                typingIndicator.className = 'chat-message flex items-start space-x-4';
+                typingIndicator.innerHTML = `
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                        <img src="3.png" alt="CAPI-AI" class="w-10 h-10 rounded-full">
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <span class="font-semibold text-dark-blue dark:text-white">CAPI-AI Assistant</span>
+                            <div class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">Thinking</div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-light-gray">Processing your request</span>
+                            <div class="flex space-x-1">
+                                <div class="typing-indicator"></div>
+                                <div class="typing-indicator"></div>
+                                <div class="typing-indicator"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                chatMessages.appendChild(typingIndicator);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Get real AI response
+                callGPT5API(message).then(aiText => {
+                    chatMessages.removeChild(typingIndicator);
+                    
+                    const aiResponse = createAIResponseElement(aiText, message);
+                    const responseElement = document.createElement('div');
+                    responseElement.className = 'chat-message flex items-start space-x-4';
+                    responseElement.innerHTML = aiResponse;
+                    
+                    chatMessages.appendChild(responseElement);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    
+                    // Save to session
+                    currentSession.messages.push(
+                        { role: 'user', content: message, timestamp: new Date() },
+                        { role: 'assistant', content: aiText, timestamp: new Date() }
+                    );
+                    
+                    // Update session title based on first message
+                    if (currentSession.messages.length === 2) {
+                        currentSession.title = message.length > 30 ? message.substring(0, 30) + '...' : message;
+                        document.querySelector('#chat-header h2').textContent = currentSession.title;
+                    }
+                    
+                    updateChatStats();
+                }).catch(error => {
+                    chatMessages.removeChild(typingIndicator);
+                    showNotification('Failed to get AI response. Using fallback.', 'error');
+                    
+                    const fallbackResponse = createAIResponseElement(generateFallbackResponse(message), message);
+                    const responseElement = document.createElement('div');
+                    responseElement.className = 'chat-message flex items-start space-x-4';
+                    responseElement.innerHTML = fallbackResponse;
+                    
+                    chatMessages.appendChild(responseElement);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                });
+            }, 500);
+        }
+
+        function createAIResponseElement(aiText, userMessage) {
+            // Detect if response should include visualizations
+            const shouldShowCharts = userMessage.toLowerCase().includes('sales') || 
+                                   userMessage.toLowerCase().includes('performance') ||
+                                   userMessage.toLowerCase().includes('analysis') ||
+                                   userMessage.toLowerCase().includes('report');
+
+            const shouldShowInventory = userMessage.toLowerCase().includes('inventory') || 
+                                      userMessage.toLowerCase().includes('stock');
+
+            let visualizations = '';
+            let badge = 'AI Response';
+
+            if (shouldShowCharts) {
+                badge = 'Analysis Complete';
+                visualizations = `
+                    <div class="grid grid-cols-2 gap-4 my-4">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-success-green">$${(Math.random() * 5 + 1).toFixed(1)}M</div>
+                            <div class="text-sm text-light-gray">Total Revenue</div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-blue-500">+${Math.floor(Math.random() * 40 + 10)}%</div>
+                            <div class="text-sm text-light-gray">Growth Rate</div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-purple-500">${Math.floor(Math.random() * 2000 + 1000)}</div>
+                            <div class="text-sm text-light-gray">Orders</div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <div class="text-2xl font-bold text-yellow-500">${Math.floor(Math.random() * 50 + 70)}%</div>
+                            <div class="text-sm text-light-gray">Customer Satisfaction</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (shouldShowInventory) {
+                badge = 'Inventory Report';
+                const categories = ['Electronics', 'Software', 'Hardware', 'Services', 'Accessories'];
+                visualizations = `
+                    <div class="space-y-2 my-4">
+                        ${categories.map(cat => {
+                            const level = Math.floor(Math.random() * 100);
+                            const color = level > 70 ? 'success-green' : level > 30 ? 'yellow-500' : 'red-500';
+                            return `
+                                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                    <span class="font-medium">${cat}</span>
+                                    <span class="text-${color}">${level}% stocked</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <img src="3.png" alt="CAPI-AI" class="w-10 h-10 rounded-full">
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm max-w-5xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-semibold text-dark-blue dark:text-white">CAPI-AI Assistant</span>
+                            <div class="bg-success-green text-white text-xs px-2 py-1 rounded-full">${badge}</div>
+                        </div>
+                        <div class="text-xs text-light-gray">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                    </div>
+                    
+                    <div class="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+                        ${aiText.replace(/\n/g, '<br>')}
+                    </div>
+                    
+                    ${visualizations}
+
+                    <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center space-x-4">
+                            <button class="flex items-center space-x-2 text-light-gray hover:text-dark-blue dark:hover:text-white transition-colors" onclick="rateResponse(this, 'up')">
+                                <i class="fa-solid fa-thumbs-up"></i>
+                                <span class="text-sm">Helpful</span>
+                            </button>
+                            <button class="flex items-center space-x-2 text-light-gray hover:text-dark-blue dark:hover:text-white transition-colors" onclick="rateResponse(this, 'down')">
+                                <i class="fa-solid fa-thumbs-down"></i>
+                                <span class="text-sm">Not Helpful</span>
+                            </button>
+                            <button class="flex items-center space-x-2 text-light-gray hover:text-dark-blue dark:hover:text-white transition-colors" onclick="copyResponse(this)">
+                                <i class="fa-solid fa-copy"></i>
+                                <span class="text-sm">Copy</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button class="bg-dark-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm" onclick="exportResponse(this)">
+                                <i class="fa-solid fa-download mr-2"></i>
+                                Export Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function rateResponse(button, rating) {
+            button.classList.add(rating === 'up' ? 'text-success-green' : 'text-red-500');
+            button.classList.remove('text-light-gray');
+            showNotification(`Thank you for your feedback!`, 'success');
+        }
+
+        function copyResponse(button) {
+            const responseText = button.closest('.bg-white, .bg-gray-800').querySelector('.leading-relaxed').textContent;
+            navigator.clipboard.writeText(responseText).then(() => {
+                showNotification('Response copied to clipboard!', 'success');
+            });
+        }
+
+        function exportResponse(button) {
+            const responseElement = button.closest('.bg-white, .bg-gray-800');
+            const responseText = responseElement.querySelector('.leading-relaxed').textContent;
+            const timestamp = responseElement.querySelector('.text-xs.text-light-gray').textContent;
+            
+            const exportData = {
+                response: responseText,
+                timestamp: timestamp,
+                exportedAt: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `capi-response-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showNotification('Response exported successfully!', 'success');
+        }
+
+        function shareConversation() {
+            const shareUrl = `${window.location.origin}${window.location.pathname}?session=${currentSession.id}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: currentSession.title,
+                    text: 'Check out this CAPI-AI conversation',
+                    url: shareUrl
+                });
+            } else {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    showNotification('Share link copied to clipboard!', 'success');
+                });
+            }
+        }
+
+        function bookmarkConversation() {
+            let bookmarks = JSON.parse(localStorage.getItem('capiBookmarks') || '[]');
+            
+            const bookmark = {
+                id: currentSession.id,
+                title: currentSession.title,
+                url: `${window.location.pathname}?session=${currentSession.id}`,
+                createdAt: new Date()
+            };
+
+            if (!bookmarks.find(b => b.id === bookmark.id)) {
+                bookmarks.unshift(bookmark);
+                localStorage.setItem('capiBookmarks', JSON.stringify(bookmarks.slice(0, 20)));
+                showNotification('Conversation bookmarked!', 'success');
+                
+                // Visual feedback
+                const bookmarkBtn = document.getElementById('bookmark-chat');
+                bookmarkBtn.querySelector('i').classList.add('text-yellow-500');
+                bookmarkBtn.querySelector('i').classList.remove('text-light-gray');
+            } else {
+                showNotification('Conversation already bookmarked', 'info');
+            }
+        }
+
+        function showChatMenu() {
+            const menu = document.createElement('div');
+            menu.className = 'fixed top-16 right-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 min-w-48';
+            menu.innerHTML = `
+                <div class="p-2">
+                    <button class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center space-x-2" onclick="clearChat()">
+                        <i class="fa-solid fa-trash text-red-500"></i>
+                        <span>Clear Chat</span>
+                    </button>
+                    <button class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center space-x-2" onclick="printChat()">
+                        <i class="fa-solid fa-print text-blue-500"></i>
+                        <span>Print Chat</span>
+                    </button>
+                    <button class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center space-x-2" onclick="exportToPDF()">
+                        <i class="fa-solid fa-file-pdf text-red-500"></i>
+                        <span>Export to PDF</span>
+                    </button>
+                    <hr class="my-2 border-gray-200 dark:border-gray-600">
+                    <a href="user_setting.html" class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center space-x-2">
+                        <i class="fa-solid fa-cog text-gray-500"></i>
+                        <span>Settings</span>
+                    </a>
+                </div>
+            `;
+
+            // Remove existing menu
+            const existingMenu = document.querySelector('.fixed.top-16.right-6');
+            if (existingMenu) existingMenu.remove();
+
+            document.body.appendChild(menu);
+
+            // Close menu when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!menu.contains(e.target) && !document.getElementById('chat-menu').contains(e.target)) {
+                        menu.remove();
+                        document.removeEventListener('click', closeMenu);
+                    }
+                });
+            }, 100);
+        }
+
+        function clearChat() {
+            if (confirm('Are you sure you want to clear this chat? This action cannot be undone.')) {
+                startNewChat();
+                showNotification('Chat cleared successfully', 'success');
+                document.querySelector('.fixed.top-16.right-6')?.remove();
+            }
+        }
+
+        function printChat() {
+            window.print();
+            document.querySelector('.fixed.top-16.right-6')?.remove();
+        }
+
+        function exportToPDF() {
+            showNotification('PDF export feature coming soon!', 'info');
+            document.querySelector('.fixed.top-16.right-6')?.remove();
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // GPT-5 API Configuration
+        const OPENAI_API_KEY = 'your-openai-api-key-here';
+        const OPENAI_API_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
+
+        // Chat state management
+        let chatHistory = [];
+        let currentSession = {
+            id: Date.now(),
+            title: 'New Chat Session',
+            messages: [],
+            createdAt: new Date()
+        };
+
+        // Button functionality
+        document.getElementById('new-chat-btn').addEventListener('click', function() {
+            if (confirm('Start a new chat session? Current conversation will be saved to history.')) {
+                saveChatSession();
+                startNewChat();
+            }
+        });
+
+        document.getElementById('quick-sales').addEventListener('click', function() {
+            sendQuickMessage('Generate a comprehensive sales analysis report for Q4 with performance metrics, trends, and recommendations');
+        });
+
+        document.getElementById('quick-inventory').addEventListener('click', function() {
+            sendQuickMessage('Provide current inventory status across all categories with stock levels, reorder points, and optimization recommendations');
+        });
+
+        document.getElementById('quick-compliance').addEventListener('click', function() {
+            sendQuickMessage('Run a compliance review check covering regulatory requirements, audit status, and risk assessment');
+        });
+
+        document.getElementById('quick-employees').addEventListener('click', function() {
+            sendQuickMessage('Generate employee insights report including performance metrics, productivity analysis, and workforce optimization recommendations');
+        });
+
+        document.getElementById('export-chat').addEventListener('click', function() {
+            exportChatHistory();
+        });
+
+        document.getElementById('share-chat').addEventListener('click', function() {
+            shareConversation();
+        });
+
+        document.getElementById('bookmark-chat').addEventListener('click', function() {
+            bookmarkConversation();
+        });
+
+        document.getElementById('chat-menu').addEventListener('click', function() {
+            showChatMenu();
+        });
+
+        function startNewChat() {
+            // Clear current chat
+            const existingMessages = document.querySelectorAll('.chat-message');
+            existingMessages.forEach(msg => {
+                if (!msg.querySelector('.font-semibold')?.textContent.includes('CAPI-AI Assistant') || 
+                    !msg.innerHTML.includes('Welcome to your ERP co-pilot')) {
+                    msg.remove();
+                }
+            });
+
+            // Reset session
+            currentSession = {
+                id: Date.now(),
+                title: 'New Chat Session',
+                messages: [],
+                createdAt: new Date()
+            };
+
+            // Update UI
+            document.querySelector('#chat-header h2').textContent = 'New Chat Session';
+            updateChatStats();
+        }
+
+        function saveChatSession() {
+            if (currentSession.messages.length > 0) {
+                chatHistory.unshift(currentSession);
+                localStorage.setItem('capiChatHistory', JSON.stringify(chatHistory.slice(0, 10))); // Keep last 10 sessions
+                updateChatHistoryUI();
+            }
+        }
+
+        function updateChatHistoryUI() {
+            const historyContainer = document.querySelector('#chat-history .space-y-2');
+            historyContainer.innerHTML = '';
+
+            chatHistory.slice(0, 5).forEach((session, index) => {
+                const sessionElement = document.createElement('div');
+                sessionElement.className = index === 0 ? 
+                    'p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border-l-4 border-success-green cursor-pointer' :
+                    'p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer';
+                
+                sessionElement.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-sm font-medium">${session.title}</span>
+                        <div class="flex items-center space-x-1">
+                            <button class="text-light-gray hover:text-gray-600 p-1">
+                                <i class="fa-solid fa-edit text-xs"></i>
+                            </button>
+                            <button class="text-light-gray hover:text-red-500 p-1" onclick="deleteSession(${session.id})">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-xs text-light-gray">${getRelativeTime(session.createdAt)} • ${session.messages.length} messages</p>
+                `;
+                
+                sessionElement.addEventListener('click', () => loadChatSession(session));
+                historyContainer.appendChild(sessionElement);
+            });
+        }
+
+        function loadChatSession(session) {
+            currentSession = session;
+            document.querySelector('#chat-header h2').textContent = session.title;
+            // Load session messages would go here
+            updateChatStats();
+        }
+
+        function deleteSession(sessionId) {
+            chatHistory = chatHistory.filter(s => s.id !== sessionId);
+            localStorage.setItem('capiChatHistory', JSON.stringify(chatHistory));
+            updateChatHistoryUI();
+        }
+
+        function updateChatStats() {
+            const statsElements = document.querySelectorAll('#chat-header .text-light-gray span');
+            if (statsElements.length >= 3) {
+                statsElements[0].textContent = getRelativeTime(currentSession.createdAt);
+                statsElements[1].textContent = `${currentSession.messages.length} messages`;
+                statsElements[2].textContent = `${Math.floor(currentSession.messages.length / 2)} reports generated`;
+            }
+        }
+
+        function getRelativeTime(date) {
+            const now = new Date();
+            const diff = now - new Date(date);
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 60) return `${minutes} minutes ago`;
+            if (hours < 24) return `${hours} hours ago`;
+            return `${days} days ago`;
+        }
+
+        function sendQuickMessage(message) {
+            document.getElementById('message-input').value = message;
+            sendMessage();
+        }
+
+        function exportChatHistory() {
+            const exportData = {
+                session: currentSession,
+                history: chatHistory,
+                exportedAt: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `capi-chat-export-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // Show success notification
+            showNotification('Chat history exported successfully!', 'success');
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-success-green text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+
+        // Add suggested prompt functionality
+        document.querySelectorAll('.suggested-prompt').forEach(button => {
+            button.addEventListener('click', function() {
+                const prompt = this.getAttribute('data-prompt');
+                sendQuickMessage(prompt);
+            });
+        });
+
+        // Load saved chat history on page load
+        window.addEventListener('load', function() {
+            const saved = localStorage.getItem('capiChatHistory');
+            if (saved) {
+                chatHistory = JSON.parse(saved);
+                updateChatHistoryUI();
+            }
+        });
+
+        // Real GPT API Integration with Model Fallback
+        async function callGPT5API(message, context = '') {
+            const systemPrompt = `You are CAPI-AI, an intelligent ERP co-pilot assistant. You help users analyze business data, generate insights, and make informed decisions. 
+
+            Context: You're working with an ERP system that handles:
+            - Sales and revenue tracking
+            - Inventory management
+            - Compliance monitoring
+            - Employee performance
+            - Financial analysis
+
+            Always provide specific, actionable insights with realistic business data. Format your responses to be helpful for business decision-making.
+
+            ${context}`;
+
+            // Try multiple models in order of preference
+            const modelsToTry = [
+                { name: 'gpt-5', params: {}, maxTokens: 5000, useTemp: false }, // GPT-5 clean request
+                { name: 'gpt-4', params: {}, maxTokens: 1500, useTemp: true },
+                { name: 'gpt-3.5-turbo', params: {}, maxTokens: 1000, useTemp: true }
+            ];
+
+            for (const model of modelsToTry) {
+                try {
+                    console.log(`Trying model: ${model.name}`);
+                    
+                    const requestBody = {
+                        model: model.name,
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: message }
+                        ],
+                        max_completion_tokens: model.maxTokens,
+                        ...(model.useTemp && { temperature: 0.7 }),
+                        ...model.params
+                    };
+
+                    const response = await fetch(OPENAI_API_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${OPENAI_API_KEY}`
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log(`✅ Success with ${model.name}`);
+                        
+                        // Update current session with successful model
+                        currentSession.model = model.name;
+                        
+                        return data.choices[0].message.content;
+                    } else {
+                        const errorData = await response.json().catch(() => ({}));
+                        console.log(`❌ ${model.name} failed (${response.status}):`, errorData.error?.message || 'Unknown error');
+                        
+                        // Continue to next model
+                        continue;
+                    }
+                } catch (error) {
+                    console.log(`❌ ${model.name} error:`, error.message);
+                    continue;
+                }
+            }
+
+            // If all models fail, use enhanced fallback
+            console.log('🔄 All API models failed, using enhanced fallback');
+            showNotification('Using offline mode - API temporarily unavailable', 'info');
+            return generateEnhancedFallbackResponse(message);
+        }
+
+        function generateEnhancedFallbackResponse(message) {
+            const businessData = {
+                sales: {
+                    revenue: (Math.random() * 3 + 2).toFixed(1) + 'M',
+                    growth: '+' + Math.floor(Math.random() * 30 + 15) + '%',
+                    orders: Math.floor(Math.random() * 1000 + 1500),
+                    satisfaction: Math.floor(Math.random() * 20 + 80) + '%'
+                },
+                inventory: generateInventoryData(),
+                compliance: generateComplianceData(),
+                employees: generateEmployeeData()
+            };
+
+            const lowerMessage = message.toLowerCase();
+            
+            if (lowerMessage.includes('sales') || lowerMessage.includes('revenue') || lowerMessage.includes('performance')) {
+                return `Based on current sales analytics, Q4 performance shows exceptional growth with ${businessData.sales.revenue} in total revenue, representing ${businessData.sales.growth} increase from last quarter. 
+
+Key Performance Indicators:
+• Total Revenue: $${businessData.sales.revenue}
+• Growth Rate: ${businessData.sales.growth} quarter-over-quarter
+• Order Volume: ${businessData.sales.orders} completed orders
+• Customer Satisfaction: ${businessData.sales.satisfaction}
+
+Top performing segments include Enterprise Software Solutions and Professional Services, with strong momentum in the North American and European markets. I recommend focusing on customer retention strategies and expanding our enterprise offerings.`;
+            }
+            
+            if (lowerMessage.includes('inventory') || lowerMessage.includes('stock')) {
+                return `Current inventory analysis reveals healthy stock levels across most product categories with several optimization opportunities.
+
+Inventory Status Overview:
+${businessData.inventory.map(item => `• ${item.category}: ${item.level}% stocked (${item.status})`).join('\n')}
+
+Critical Actions Required:
+- Immediate reorder needed for Software licenses (below 20% threshold)
+- Electronics inventory optimal for seasonal demand
+- Consider reducing Hardware overstock to improve cash flow
+
+Recommendation: Implement automated reorder points and improve demand forecasting accuracy by 15%.`;
+            }
+            
+            if (lowerMessage.includes('compliance') || lowerMessage.includes('audit')) {
+                return `Comprehensive compliance review completed across all operational departments.
+
+Current Compliance Status:
+${businessData.compliance.map(item => `• ${item.area}: ${item.status} (${item.score}% compliant)`).join('\n')}
+
+Key Findings:
+- All critical regulatory requirements met
+- Minor documentation gaps in training records
+- Excellent performance in data security protocols
+
+Next Steps: Schedule quarterly compliance training and update data retention policies to maintain our strong compliance posture.`;
+            }
+            
+            if (lowerMessage.includes('employee') || lowerMessage.includes('workforce')) {
+                return `Employee performance analysis shows positive workforce trends with strong productivity metrics.
+
+Workforce Analytics:
+${businessData.employees.map(item => `• ${item.dept}: ${item.productivity}% productivity, ${item.satisfaction}% satisfaction`).join('\n')}
+
+Key Insights:
+- Overall productivity increased ${Math.floor(Math.random() * 10 + 8)}% this quarter
+- Employee satisfaction at all-time high of ${Math.floor(Math.random() * 10 + 85)}%
+- Strong performance in Engineering and Sales departments
+
+Recommendations: Invest in professional development programs and consider expanding remote work options to maintain momentum.`;
+            }
+
+            return `I understand you're asking about "${message}". As your ERP co-pilot, I can provide detailed analysis across multiple business areas including sales performance, inventory optimization, compliance monitoring, and workforce analytics. 
+
+Would you like me to generate a specific report on any of these areas? I can provide:
+• Real-time sales analytics with growth metrics
+• Inventory status with reorder recommendations  
+• Compliance audit results with risk assessment
+• Employee performance insights with productivity trends
+
+Please specify which area you'd like me to focus on for a detailed analysis.`;
+        }
+
+        function generateInventoryData() {
+            const categories = ['Electronics', 'Software', 'Hardware', 'Services', 'Accessories'];
+            return categories.map(cat => {
+                const level = Math.floor(Math.random() * 100);
+                return {
+                    category: cat,
+                    level: level,
+                    status: level > 70 ? 'Well Stocked' : level > 30 ? 'Moderate' : 'Low Stock'
+                };
+            });
+        }
+
+        function generateComplianceData() {
+            const areas = ['Data Security', 'Financial Reporting', 'HR Policies', 'Quality Standards', 'Environmental'];
+            return areas.map(area => {
+                const score = Math.floor(Math.random() * 15 + 85);
+                return {
+                    area: area,
+                    score: score,
+                    status: score > 95 ? 'Excellent' : score > 85 ? 'Good' : 'Needs Attention'
+                };
+            });
+        }
+
+        function generateEmployeeData() {
+            const departments = ['Engineering', 'Sales', 'Marketing', 'Operations', 'Support'];
+            return departments.map(dept => ({
+                dept: dept,
+                productivity: Math.floor(Math.random() * 20 + 75),
+                satisfaction: Math.floor(Math.random() * 15 + 80)
+            }));
+        }
+
+        function generateFallbackResponse(message) {
+            const fallbackResponses = {
+                'sales': 'Based on current sales data, I can see strong Q4 performance with 23% growth. Revenue reached $2.4M with Enterprise Software Suite leading at $847K (35% of total). North America continues to be our strongest market at 50% of sales.',
+                'inventory': 'Current inventory analysis shows healthy stock levels across most categories. Electronics are well-stocked at 85%, but Software category is running low at 12% and requires immediate reordering. I recommend setting up automated reorder points.',
+                'compliance': 'Compliance review shows good overall standing. All regulatory requirements are up to date with no outstanding violations. However, I recommend scheduling quarterly compliance audits and updating employee training on new regulations.',
+                'employee': 'Employee performance metrics show positive trends. Average productivity is up 12% this quarter with 87% employee satisfaction. Top performers in Sales and Engineering departments. I recommend focusing on professional development for the Marketing team.',
+                'default': `I understand you're asking about "${message}". As your ERP co-pilot, I can help you analyze sales performance, inventory levels, compliance status, employee metrics, and financial data. Could you provide more specific details about what you'd like to analyze?`
+            };
+
+            const lowerMessage = message.toLowerCase();
+            if (lowerMessage.includes('sales') || lowerMessage.includes('revenue')) return fallbackResponses.sales;
+            if (lowerMessage.includes('inventory') || lowerMessage.includes('stock')) return fallbackResponses.inventory;
+            if (lowerMessage.includes('compliance') || lowerMessage.includes('audit')) return fallbackResponses.compliance;
+            if (lowerMessage.includes('employee') || lowerMessage.includes('performance')) return fallbackResponses.employee;
+            return fallbackResponses.default;
+        }
+
+        // Smooth scrolling for chat messages
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    </script>
+
+</body></html>
