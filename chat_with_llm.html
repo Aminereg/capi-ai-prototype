@@ -1249,18 +1249,109 @@
 
         // Real GPT API Integration with Model Fallback
         async function callGPT5API(message, context = '') {
-            const systemPrompt = `You are CAPI-AI, an intelligent ERP co-pilot assistant. You help users analyze business data, generate insights, and make informed decisions. 
+            const systemPrompt = `You are CAPI-AI, an intelligent ERP co-pilot assistant for TechCorp Industries. You have access to our complete ERP database and provide real-time business intelligence.
 
-            Context: You're working with an ERP system that handles:
-            - Sales and revenue tracking
-            - Inventory management
-            - Compliance monitoring
-            - Employee performance
-            - Financial analysis
+==== CURRENT ERP DATA CONTEXT (Live as of ${new Date().toLocaleDateString()}) ====
 
-            Always provide specific, actionable insights with realistic business data. Format your responses to be helpful for business decision-making.
+📊 SALES & REVENUE:
+- Q4 Revenue: $3.2M (↑18% from Q3, ↑24% YoY)
+- YTD Revenue: $11.8M (Target: $12M - 98% achieved)
+- Top Product: Enterprise Software Suite ($1.1M, 34% of revenue)
+- Top Client: GlobalManufacturing ($185K annual contract)
+- Average Deal Size: $12,500 (↑8% from last quarter)
+- Conversion Rate: 23% (leads to customers)
+- Pipeline Value: $2.1M (next 90 days)
+- Top Sales Rep: Sarah Chen ($420K closed this quarter)
 
-            ${context}`;
+🏢 CUSTOMERS & MARKETS:
+- Total Active Customers: 1,247
+- Enterprise Clients: 89 (avg $45K annual value)
+- SMB Clients: 1,158 (avg $8K annual value)
+- Geographic Split: North America 45%, Europe 32%, Asia 23%
+- Customer Retention: 94% (industry avg: 87%)
+- Net Promoter Score: 72 (excellent)
+
+📦 INVENTORY & SUPPLY CHAIN:
+- Electronics: 850 units (85% capacity, optimal)
+- Software Licenses: 120 units (12% - CRITICAL LOW)
+- Hardware Components: 640 units (64% capacity)
+- Professional Services: 95% availability
+- Warehouse Locations: 3 (Chicago, Frankfurt, Singapore)
+- Average Inventory Turnover: 8.2x annually
+- Supply Chain Efficiency: 92%
+
+💰 FINANCIAL PERFORMANCE:
+- Gross Margin: 68% (target: 65%)
+- Operating Margin: 22% (↑3% from last quarter)
+- Cash Flow: $1.8M positive
+- A/R Outstanding: $485K (avg 35 days)
+- A/P Outstanding: $220K (avg 28 days)
+- Working Capital: $2.4M
+- EBITDA: $2.9M (25% margin)
+
+👥 HUMAN RESOURCES:
+- Total Employees: 450
+- Engineering: 125 (27.8%) - Productivity 92%, Satisfaction 89%
+- Sales: 85 (18.9%) - Productivity 88%, Satisfaction 91%
+- Marketing: 45 (10%) - Productivity 78%, Satisfaction 85%
+- Operations: 95 (21.1%) - Productivity 85%, Satisfaction 82%
+- Support: 55 (12.2%) - Productivity 90%, Satisfaction 88%
+- Admin/Finance: 45 (10%) - Productivity 86%, Satisfaction 84%
+- Turnover Rate: 8% annually (industry avg: 15%)
+- Average Tenure: 3.2 years
+- Training Hours: 2,400 completed this quarter
+
+🏭 OPERATIONS & MANUFACTURING:
+- Production Capacity: 85% utilized
+- Quality Score: 99.1% (Six Sigma level)
+- Equipment Uptime: 96.5%
+- Maintenance Schedule: 98% compliance
+- Energy Efficiency: ↑12% from last year
+- Waste Reduction: 15% improvement YoY
+
+⚖️ COMPLIANCE & RISK:
+- SOX Compliance: 100% (last audit: Sep 2024)
+- ISO 27001: Certified (renewal due: Mar 2025)
+- GDPR Compliance: 100% (data privacy excellent)
+- Financial Audit: Clean opinion (Deloitte)
+- Risk Score: Low (2.1/10 scale)
+- Insurance Coverage: $50M liability, $25M cyber
+- Regulatory Violations: 0 in past 24 months
+
+🔧 IT & TECHNOLOGY:
+- System Uptime: 99.7% (target: 99.5%)
+- Security Incidents: 0 critical, 3 minor (resolved)
+- Data Backup: 100% successful (daily automated)
+- Cloud Infrastructure: AWS (99.99% availability)
+- Software Licenses: 847 active, 23 expiring in 90 days
+- Help Desk Tickets: 145 open, avg resolution 4.2 hours
+
+📈 MARKETING & CUSTOMER ACQUISITION:
+- Marketing Qualified Leads: 1,850/month
+- Customer Acquisition Cost: $1,200
+- Lifetime Value: $35,000 (29:1 LTV/CAC ratio)
+- Website Traffic: 45K monthly visitors
+- Social Media Reach: 125K followers
+- Campaign ROI: 340% average
+
+🔍 PROCUREMENT & VENDOR MANAGEMENT:
+- Active Vendors: 234
+- Top Vendor: Microsoft ($125K annual)
+- Vendor Performance Score: 87% average
+- Contract Renewals Due: 12 in next 90 days
+- Cost Savings YTD: $340K (through negotiations)
+- Supplier Diversity: 35% minority/women-owned
+
+RESPONSE INSTRUCTIONS:
+1. Always reference specific data points from above when relevant
+2. If asked about data not listed, SIMULATE realistic values that fit the company profile
+3. Use specific numbers, percentages, and trends in your responses
+4. Provide actionable business recommendations
+5. Format responses with clear headers and bullet points
+6. Include relevant KPIs and benchmarks
+7. If simulating data, make it consistent with existing values
+
+${context}`;
 
             // Try multiple models in order of preference
             const modelsToTry = [
@@ -1321,44 +1412,92 @@
         }
 
         function generateEnhancedFallbackResponse(message) {
-            const businessData = {
+            // Use consistent data from our system prompt
+            const erpData = {
                 sales: {
-                    revenue: (Math.random() * 3 + 2).toFixed(1) + 'M',
-                    growth: '+' + Math.floor(Math.random() * 30 + 15) + '%',
-                    orders: Math.floor(Math.random() * 1000 + 1500),
-                    satisfaction: Math.floor(Math.random() * 20 + 80) + '%'
+                    q4Revenue: '$3.2M',
+                    growth: '↑18% from Q3, ↑24% YoY',
+                    ytdRevenue: '$11.8M',
+                    topProduct: 'Enterprise Software Suite ($1.1M)',
+                    avgDealSize: '$12,500',
+                    conversionRate: '23%',
+                    pipelineValue: '$2.1M'
                 },
-                inventory: generateInventoryData(),
-                compliance: generateComplianceData(),
-                employees: generateEmployeeData()
+                inventory: {
+                    electronics: '850 units (85% capacity)',
+                    software: '120 units (12% - CRITICAL LOW)',
+                    hardware: '640 units (64% capacity)',
+                    services: '95% availability'
+                },
+                hr: {
+                    totalEmployees: '450',
+                    turnoverRate: '8% annually',
+                    satisfaction: '87% average',
+                    productivity: '+12% this quarter'
+                },
+                financial: {
+                    grossMargin: '68%',
+                    operatingMargin: '22%',
+                    cashFlow: '$1.8M positive',
+                    ebitda: '$2.9M (25% margin)'
+                },
+                operations: {
+                    capacity: '85% utilized',
+                    quality: '99.1% (Six Sigma)',
+                    uptime: '96.5%',
+                    efficiency: '↑12% energy efficiency'
+                }
             };
 
             const lowerMessage = message.toLowerCase();
             
             if (lowerMessage.includes('sales') || lowerMessage.includes('revenue') || lowerMessage.includes('performance')) {
-                return `Based on current sales analytics, Q4 performance shows exceptional growth with ${businessData.sales.revenue} in total revenue, representing ${businessData.sales.growth} increase from last quarter. 
+                return `**Q4 SALES PERFORMANCE ANALYSIS**
 
-Key Performance Indicators:
-• Total Revenue: $${businessData.sales.revenue}
-• Growth Rate: ${businessData.sales.growth} quarter-over-quarter
-• Order Volume: ${businessData.sales.orders} completed orders
-• Customer Satisfaction: ${businessData.sales.satisfaction}
+📈 **Revenue Overview:**
+• Q4 Revenue: ${erpData.sales.q4Revenue} (${erpData.sales.growth})
+• YTD Revenue: ${erpData.sales.ytdRevenue} (98% of $12M target)
+• Average Deal Size: ${erpData.sales.avgDealSize} (↑8% from Q3)
+• Conversion Rate: ${erpData.sales.conversionRate} (industry avg: 18%)
 
-Top performing segments include Enterprise Software Solutions and Professional Services, with strong momentum in the North American and European markets. I recommend focusing on customer retention strategies and expanding our enterprise offerings.`;
+🏆 **Top Performers:**
+• Best Product: ${erpData.sales.topProduct} - 34% of total revenue
+• Best Region: North America (45% of sales)
+• Top Sales Rep: Sarah Chen ($420K closed this quarter)
+• Pipeline Value: ${erpData.sales.pipelineValue} (next 90 days)
+
+🎯 **Key Insights:**
+• Strong momentum in Enterprise segment
+• Customer retention at 94% (industry: 87%)
+• Net Promoter Score: 72 (excellent rating)
+
+**Recommendations:** Focus on Software License renewals and expand Enterprise offerings in European markets.`;
             }
             
             if (lowerMessage.includes('inventory') || lowerMessage.includes('stock')) {
-                return `Current inventory analysis reveals healthy stock levels across most product categories with several optimization opportunities.
+                return `**INVENTORY STATUS REPORT**
 
-Inventory Status Overview:
-${businessData.inventory.map(item => `• ${item.category}: ${item.level}% stocked (${item.status})`).join('\n')}
+📦 **Current Stock Levels:**
+• Electronics: ${erpData.inventory.electronics} - OPTIMAL
+• Software Licenses: ${erpData.inventory.software} - ⚠️ IMMEDIATE ACTION REQUIRED
+• Hardware Components: ${erpData.inventory.hardware} - MODERATE
+• Professional Services: ${erpData.inventory.services} - EXCELLENT
 
-Critical Actions Required:
-- Immediate reorder needed for Software licenses (below 20% threshold)
-- Electronics inventory optimal for seasonal demand
-- Consider reducing Hardware overstock to improve cash flow
+🚨 **Critical Actions Required:**
+• **Software Licenses**: URGENT reorder needed (below 20% threshold)
+• **Hardware**: Monitor closely, reorder when <50%
+• **Electronics**: Well-stocked, no action needed
 
-Recommendation: Implement automated reorder points and improve demand forecasting accuracy by 15%.`;
+📍 **Warehouse Performance:**
+• Chicago: 92% efficiency
+• Frankfurt: 88% efficiency  
+• Singapore: 91% efficiency
+• Inventory Turnover: 8.2x annually (excellent)
+
+**Recommendations:** 
+1. Emergency Software License order (minimum 500 units)
+2. Implement automated reorder points at 25% threshold
+3. Optimize Hardware distribution between warehouses`;
             }
             
             if (lowerMessage.includes('compliance') || lowerMessage.includes('audit')) {
